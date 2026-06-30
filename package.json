@@ -1,0 +1,22 @@
+{
+  "name": "desktop-memo",
+  "version": "1.0.0",
+  "description": "Desktop Memo Widget",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.lsj.desktopmemo",
+    "productName": "MemoWidget",
+    "directories": { "output": "dist" },
+    "win": { "target": "portable" },
+    "portable": { "artifactName": "MemoWidget.exe" },
+    "files": ["main.js", "preload.js", "index.html", "renderer.js"]
+  },
+  "devDependencies": {
+    "electron": "latest",
+    "electron-builder": "latest"
+  }
+}

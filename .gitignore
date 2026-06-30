@@ -1,0 +1,19 @@
+# 의존성 (npm install로 복원)
+node_modules/
+
+# 빌드 산출물 (npm run dist로 재생성)
+dist/
+
+# 로그 / 진단용 임시 파일 (이름이 _ 로 시작)
+_*
+*.log
+
+# 개인 메모 데이터 (혹시라도 폴더에 들어올 경우 대비)
+desktop_memo_content.txt
+content.txt
+
+# OS / 에디터
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/

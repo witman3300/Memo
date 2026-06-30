@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>메모</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: transparent;
+    font-family: 'Malgun Gothic', 'Segoe UI', sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  #widget {
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 250, 210, 0.30);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    border-right: 1px solid rgba(200, 180, 80, 0.45);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 상단 바 (드래그로 창 이동) */
+  #topbar {
+    height: 28px;
+    line-height: 28px;
+    padding: 0 8px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(200, 180, 80, 0.45);
+    flex: 0 0 auto;
+    -webkit-app-region: drag;
+  }
+  #pin { float: left; }
+  .tb-btn {
+    float: left;
+    margin-left: 11px;
+    cursor: pointer;
+    color: rgba(120, 90, 10, 0.75);
+    font-size: 16px;
+    font-weight: bold;
+    -webkit-app-region: no-drag;
+  }
+  .tb-btn:hover { color: #2a8a3e; }
+  #close {
+    float: right;
+    cursor: pointer;
+    color: rgba(120, 90, 10, 0.7);
+    font-weight: bold;
+    padding: 0 3px;
+    -webkit-app-region: no-drag;
+  }
+  #close:hover { color: #b00; }
+
+  #view, #edit {
+    color: rgba(50, 35, 5, 0.9);
+    font-size: 11.5px;
+    line-height: 1.75;
+    font-family: inherit;
+  }
+
+  #view {
+    flex: 1 1 auto;
+    padding: 8px;
+    overflow-y: auto;
+    cursor: default;
+    user-select: text;
+  }
+  #edit {
+    flex: 1 1 auto;
+    border: none;
+    outline: none;
+    background: rgba(255, 255, 200, 0.55);
+    resize: none;
+    width: 100%;
+    padding: 8px;
+    display: none;
+    overflow-y: auto;
+    user-select: text;
+  }
+
+  /* 체크리스트 */
+  #view .ln { white-space: pre-wrap; word-break: break-word; }
+  #view .item { display: flex; align-items: flex-start; }
+  #view .cb {
+    display: inline-block;
+    width: 11px; height: 11px;
+    margin: 3px 6px 0 0;
+    border: 1.3px solid rgba(120, 90, 10, 0.85);
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+    flex: 0 0 auto;
+  }
+  #view .cb:hover { border-color: #2a8a3e; }
+  #view .cb.on { background: #2a8a3e; border-color: #2a8a3e; }
+  #view .cb.on:after {
+    content: '';
+    position: absolute;
+    left: 3px; top: 0;
+    width: 3px; height: 6px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  #view .tx { flex: 1 1 auto; }
+  #view .item.done .tx { text-decoration: line-through; opacity: 0.5; }
+  #view .note { padding-left: 17px; opacity: 0.72; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: rgba(120,90,10,0.25); border-radius: 6px; }
+
+  #kakaoBtn { font-size: 14px; }
+  #toast {
+    position: fixed;
+    bottom: 12px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.78);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+  <div id="widget">
+    <div id="topbar">
+      <span id="pin">📌</span>
+      <span class="tb-btn" id="undoBtn" title="되돌리기">&#8630;</span>
+      <span class="tb-btn" id="refreshBtn" title="새로고침">&#8635;</span>
+      <span class="tb-btn" id="kakaoBtn" title="메모 복사 후 카카오톡 열기">💬</span>
+      <span id="close" title="닫기">&#215;</span>
+    </div>
+    <div id="view"></div>
+    <textarea id="edit" spellcheck="false"></textarea>
+    <div id="toast"></div>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>
