@@ -34,6 +34,7 @@ function createWindow() {
     y: wa.y,
     width: 340,
     height: wa.height,
+    icon: path.join(__dirname, 'icon.ico'),
     frame: false,
     transparent: true,
     alwaysOnTop: true,

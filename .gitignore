@@ -12,6 +12,9 @@ _*
 desktop_memo_content.txt
 content.txt
 
+# 아이콘 미리보기 (생성 부산물, icon.ico만 관리)
+icon_preview.png
+
 # OS / 에디터
 Thumbs.db
 desktop.ini

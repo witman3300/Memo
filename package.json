@@ -11,9 +11,9 @@
     "appId": "com.lsj.desktopmemo",
     "productName": "MemoWidget",
     "directories": { "output": "dist" },
-    "win": { "target": "portable" },
+    "win": { "target": "portable", "icon": "icon.ico" },
     "portable": { "artifactName": "MemoWidget.exe" },
-    "files": ["main.js", "preload.js", "index.html", "renderer.js"]
+    "files": ["main.js", "preload.js", "index.html", "renderer.js", "icon.ico"]
   },
   "devDependencies": {
     "electron": "latest",
