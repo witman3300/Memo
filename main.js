@@ -15,12 +15,29 @@ const dataDir = app.getPath('userData');
 const dataFile = path.join(dataDir, 'content.txt');
 const seedFile = 'C:\\Users\\lsj\\Desktop\\desktop_memo_content.txt';
 
+/* BOM을 보고 인코딩을 판별해 텍스트로 디코딩 (UTF-16LE/BE, UTF-8) */
+function readTextSmart(p) {
+  const buf = fs.readFileSync(p);
+  if (buf.length >= 2 && buf[0] === 0xFF && buf[1] === 0xFE) {
+    return buf.toString('utf16le', 2);
+  }
+  if (buf.length >= 2 && buf[0] === 0xFE && buf[1] === 0xFF) {
+    const swapped = Buffer.from(buf.slice(2));
+    swapped.swap16();
+    return swapped.toString('utf16le');
+  }
+  if (buf.length >= 3 && buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) {
+    return buf.toString('utf8', 3);
+  }
+  return buf.toString('utf8');
+}
+
 function ensureData() {
   try {
     fs.mkdirSync(dataDir, { recursive: true });
     if (!fs.existsSync(dataFile)) {
       let seed = '';
-      try { if (fs.existsSync(seedFile)) seed = fs.readFileSync(seedFile, 'utf8'); } catch (e) {}
+      try { if (fs.existsSync(seedFile)) seed = readTextSmart(seedFile); } catch (e) {}
       fs.writeFileSync(dataFile, seed, 'utf8');
     }
   } catch (e) {}
@@ -52,7 +69,7 @@ function createWindow() {
 }
 
 ipcMain.handle('memo:load', () => {
-  try { return fs.readFileSync(dataFile, 'utf8'); } catch (e) { return ''; }
+  try { return readTextSmart(dataFile); } catch (e) { return ''; }
 });
 ipcMain.handle('memo:save', (e, text) => {
   try { fs.writeFileSync(dataFile, text, 'utf8'); } catch (err) {}

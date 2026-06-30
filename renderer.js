@@ -43,6 +43,7 @@ function normalizeNumbering(text) {
     if (j < firstSep) { out.push(lines[j]); continue; }
     const line = lines[j];
     if (isSep(line)) { n = 0; out.push(line); continue; }
+    if (line.replace(/^\s+/, '').startsWith(MK_NOTE)) { out.push(line); continue; }
     const m = line.match(/^(\s*)(\d+)\.(.*)$/);
     if (m) {
       if (/^\s*$/.test(m[3])) { continue; }
@@ -111,6 +112,16 @@ function toggleDone(idx) {
   renderView();
 }
 
+/* ===== 새로고침 전용: "빈출" 표시된 줄 제거 ===== */
+function removeBinchulLines(text) {
+  return text.split('\n').filter(line => !line.includes('빈출')).join('\n');
+}
+
+/* ===== 새로고침 전용: 빈 줄 제거 (구분선/글자 있는 줄은 보존) ===== */
+function removeBlankLines(text) {
+  return text.split('\n').filter(line => line.trim() !== '').join('\n');
+}
+
 /* ===== 되돌리기 / 새로고침 ===== */
 function pushUndo(prev) { undoStack.push(prev); if (undoStack.length > 50) undoStack.shift(); }
 function doUndo() {
@@ -123,7 +134,7 @@ function doUndo() {
 async function doRefresh() {
   pushUndo(content);
   const loaded = await window.memoAPI.load();
-  content = normalizeNumbering(autoFormatTop(loaded));
+  content = normalizeNumbering(removeBlankLines(removeBinchulLines(autoFormatTop(loaded))));
   saveMemo(content);
   edit.value = content;
   renderView();
