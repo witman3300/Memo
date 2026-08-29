@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta charset="UTF-8">
+<title>메모</title>
+
+<hta:application id="memoApp"
+  applicationname="DesktopMemo"
+  border="none"
+  caption="no"
+  sysmenu="no"
+  maximizebutton="no"
+  minimizebutton="no"
+  showintaskbar="yes"
+  innerborder="no"
+  scroll="no"
+  contextmenu="no"
+  selection="yes"
+/>
+
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: #fcf7d2;
+    font-family: 'Malgun Gothic', 'Segoe UI', sans-serif;
+    overflow: hidden;
+  }
+  #widget {
+    width: 100%;
+    height: 100vh;
+    border-right: 1px solid rgba(200, 180, 80, 0.4);
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  #topbar {
+    height: 28px;
+    line-height: 28px;
+    padding: 0 8px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(200, 180, 80, 0.4);
+    box-sizing: border-box;
+    cursor: move;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  #pin { float: left; }
+  .tb-btn {
+    float: left;
+    margin-left: 11px;
+    cursor: pointer;
+    color: rgba(120, 90, 10, 0.75);
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .tb-btn:hover { color: #2a8a3e; }
+  #close {
+    float: right;
+    cursor: pointer;
+    color: rgba(120, 90, 10, 0.7);
+    font-weight: bold;
+    padding: 0 3px;
+  }
+  #close:hover { color: #b00; }
+  #brand {
+    float: right;
+    margin-right: 9px;
+    font-size: 10.5px;
+    letter-spacing: 0.5px;
+    color: rgba(120, 90, 10, 0.6);
+    -ms-user-select: none;
+    user-select: none;
+    cursor: default;
+  }
+
+  /* 버튼 hover 시 안내 말풍선 */
+  .tb-btn, #close { position: relative; }
+  .tb-btn:hover:after, #close:hover:after {
+    content: attr(data-tip);
+    position: absolute;
+    top: 26px;
+    left: 50%;
+    -ms-transform: translateX(-50%);
+    transform: translateX(-50%);
+    background: rgba(60, 45, 5, 0.92);
+    color: #fff;
+    font-size: 11px;
+    font-weight: normal;
+    line-height: 1.6;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 99;
+  }
+  #close:hover:after {
+    left: auto;
+    right: 0;
+    -ms-transform: none;
+    transform: none;
+  }
+  #view, #edit {
+    color: rgba(50, 35, 5, 0.88);
+    font-size: 11.5px;
+    line-height: 1.75;
+    font-family: inherit;
+    transition: background 0.2s;
+  }
+  #view {
+    padding: 8px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    height: calc(100vh - 29px);
+    overflow-y: auto;
+    cursor: default;
+    background: transparent;
+    box-sizing: border-box;
+  }
+  #edit {
+    border: none;
+    outline: none;
+    background: rgba(255, 255, 200, 0.55);
+    resize: none;
+    width: 100%;
+    height: calc(100vh - 29px);
+    padding: 8px;
+    box-sizing: border-box;
+    display: none;
+    overflow-y: auto;
+  }
+
+  /* 체크리스트 */
+  #view .ln { white-space: pre-wrap; word-break: break-word; }
+  #view .item { display: flex; align-items: flex-start; }
+  #view .cb {
+    display: inline-block;
+    width: 11px; height: 11px;
+    margin: 3px 6px 0 0;
+    border: 1.3px solid rgba(120, 90, 10, 0.85);
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+    flex: 0 0 auto;
+  }
+  #view .cb:hover { border-color: #2a8a3e; }
+  #view .cb.on { background: #2a8a3e; border-color: #2a8a3e; }
+  #view .cb.on:after {
+    content: '';
+    position: absolute;
+    left: 3px; top: 0;
+    width: 3px; height: 6px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+  }
+  #view .tx { flex: 1 1 auto; }
+  #view .item.done .tx { text-decoration: line-through; opacity: 0.5; }
+  #view .note { padding-left: 17px; opacity: 0.72; }
+  #view .lnk {
+    color: #1a5fb4;
+    text-decoration: underline;
+    cursor: pointer;
+    word-break: break-all;
+  }
+  #view .lnk:hover { color: #2a8a3e; }
+</style>
+</head>
+
+<body>
+  <div id="widget">
+    <div id="topbar">
+      <span id="pin">📌</span>
+      <span class="tb-btn" id="editBtn" data-tip="편집하기" title="편집하기" onclick="startEdit();event.cancelBubble=true;return false;">&#9998;</span>
+      <span class="tb-btn" id="undoBtn" data-tip="되돌리기" title="되돌리기" onclick="doUndo();event.cancelBubble=true;return false;">&#8630;</span>
+      <span class="tb-btn" id="refreshBtn" data-tip="새로고침" title="새로고침" onclick="doRefresh();event.cancelBubble=true;return false;">&#8635;</span>
+      <span id="close" data-tip="닫기" title="닫기">&#215;</span>
+      <span id="brand">&#9415; 2026 SJBC</span>
+    </div>
+    <div id="view"></div>
+    <textarea id="edit" spellcheck="false"></textarea>
+  </div>
+
+<script id="memoData" type="text/plain">
+📝 메모위젯 사용법 — 읽어본 후 지우고 자유롭게 쓰세요
+🔲 09:00 시간(예: 09:00)으로 시작하는 줄은 자동으로 체크박스가 생깁니다
+→ 화살표(→)로 시작하면 이렇게 세부 메모가 됩니다
+🔲 10:00 체크박스로 완료 표시가 되어 To Do 리스트로 사용할 수 있습니다
+-----------------------------------------------
+1.이 파일은 바탕화면에 압축을 풀어서 사용하세요
+2.✎ 편집하기 : 버튼을 누르거나 화면을 더블클릭하면 수정할 수 있습니다
+3.수정 후 다른 곳을 클릭하면 자동으로 저장됩니다
+4.↺ 되돌리기 : 직전 상태로 복구합니다
+5.↻ 새로고침 : 구분선 아래 목록의 번호(1.2.3.)를 자동 정리합니다
+6.Alt + 위/아래 화살표 : 편집 중 줄을 위아래로 이동합니다
+7.구분선(-----, =====)으로 단기 · 중기 · 장기 계획을 나누어 사용할 수 있습니다
+8.맨 위 제목줄을 잡고 끌면 위젯 위치를 옮길 수 있습니다
+-----------------------------------------------
+제공 : 세명장교 비즈니스센터 (SJBC)
+서울특별시 중구 장교동 1번지 장교빌딩 810호
+02-762-3009 / 010-8955-3300
+상주 · 비상주 사무실, 창업, 사업자등록, AI교육 상담 환영합니다
+비즈니스센터 홈페이지 : http://semyung.co.kr
+AI 창업 컨설팅 : https://sauphaja.ai.kr
+문제해결 AI 탐정단 : https://perfectwin.ai.kr
+</script>
+
+<script language="javascript">
+  /* ===== 단일 파일 저장 방식 =====
+     메모 내용은 위의 <script id="memoData"> 블록 안에 저장됩니다.
+     저장 시 이 HTA 파일 자신을 다시 써서 내용을 갱신합니다.
+     별도의 txt 파일이 필요 없습니다. */
+
+  /* 자기 파일 경로 찾기: commandLine 우선 (한글 경로에서 가장 안전), 실패 시 location 사용 */
+  function getSelfPath(){
+    try {
+      var cl = memoApp.commandLine;
+      if (cl) {
+        var m = cl.match(/"([^"]+\.hta)"/i);
+        if (m) return m[1];
+        m = cl.match(/(\S+\.hta)/i);
+        if (m) return m[1];
+      }
+    } catch(e){}
+    try {
+      var p = location.pathname;
+      try { p = decodeURIComponent(p); } catch(e2){}
+      return p.replace(/^\//, '').replace(/\//g, '\\');
+    } catch(e3){ return ''; }
+  }
+  var HTA_PATH = getSelfPath();
+
+  /* 오류가 나면 조용히 넘어가지 않고 원인을 알려줌 (최초 1회) */
+  var errShown = false;
+  function reportErr(where, e){
+    if (errShown) return;
+    errShown = true;
+    alert('[메모위젯] ' + where + ' 실패\n\n파일 경로: ' + HTA_PATH
+      + '\n오류 내용: ' + (e && e.message ? e.message : e)
+      + '\n\n확인할 것:\n1. 파일 우클릭 - 속성 - 아래쪽 [차단 해제] 체크 후 확인\n2. Windows 보안 - 바이러스 및 위협 방지 - 랜섬웨어 방지 - [제어된 폴더 액세스]가 켜져 있으면 mshta 차단됨\n3. 파일이 읽기 전용인지 확인');
+  }
+
+  /* 마커 문자열 (파일 검색용, 자기 자신과 매칭되지 않도록 문자열 결합으로 구성) */
+  var OPEN_TAG  = '<scr' + 'ipt id="memoData" type="text/plain">';
+  var CLOSE_TAG = '</scr' + 'ipt>';
+
+  function encMemo(s){ return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function decMemo(s){ return s.replace(/&lt;/g, '<').replace(/&amp;/g, '&'); }
+
+  function readSelf(){
+    var st = new ActiveXObject("ADODB.Stream");
+    st.Type = 2; st.Charset = "utf-8"; st.Open();
+    st.LoadFromFile(HTA_PATH);
+    var s = st.ReadText();
+    st.Close();
+    if (s.charCodeAt(0) === 0xFEFF) s = s.substr(1);   /* BOM 제거 */
+    return s;
+  }
+  function writeSelf(txt){
+    /* UTF-8로 쓰되 BOM(EF BB BF) 없이 저장 */
+    var st = new ActiveXObject("ADODB.Stream");
+    st.Type = 2; st.Charset = "utf-8"; st.Open();
+    st.WriteText(txt);
+    st.Position = 3;                                   /* BOM 3바이트 건너뜀 */
+    var bin = new ActiveXObject("ADODB.Stream");
+    bin.Type = 1; bin.Open();
+    st.CopyTo(bin);
+    st.Close();
+    bin.SaveToFile(HTA_PATH, 2);
+    bin.Close();
+  }
+
+  function loadMemo() {
+    try {
+      var f = readSelf();
+      var a = f.indexOf(OPEN_TAG);
+      if (a < 0) return '';
+      a += OPEN_TAG.length;
+      var b = f.indexOf(CLOSE_TAG, a);
+      if (b < 0) return '';
+      var raw = f.substring(a, b);
+      raw = raw.replace(/^\r?\n/, '').replace(/\r?\n[ \t]*$/, '');
+      return decMemo(raw);
+    } catch (e) { reportErr('메모 읽기', e); return ''; }
+  }
+  function saveMemo(text) {
+    try {
+      var f = readSelf();
+      var a = f.indexOf(OPEN_TAG);
+      if (a < 0) return;
+      a += OPEN_TAG.length;
+      var b = f.indexOf(CLOSE_TAG, a);
+      if (b < 0) return;
+      var nf = f.substring(0, a) + '\r\n' + encMemo(text) + '\r\n' + f.substring(b);
+      writeSelf(nf);
+    } catch (e) { reportErr('메모 저장', e); }
+  }
+
+  /* ===== 되돌리기(undo) 이력 + 새로고침 ===== */
+  var undoStack = [];
+  function pushUndo(prev){
+    undoStack.push(prev);
+    if (undoStack.length > 50) undoStack.shift();
+  }
+  function doUndo(){
+    if (!undoStack.length) return;
+    content = undoStack.pop();
+    saveMemo(content);
+    edit.value = content;
+    renderView();
+  }
+  function doRefresh(){
+    pushUndo(content);
+    content = normalizeNumbering(autoFormatTop(loadMemo()));
+    saveMemo(content);
+    edit.value = content;
+    renderView();
+  }
+
+  /* ===== 자동 재번호: 구간별로 위→아래 1,2,3… 오름차순 ===== */
+  function renumberArr(lines) {
+    var n = 0;
+    for (var i = 0; i < lines.length; i++) {
+      if (/^[\s=\-_]{4,}$/.test(lines[i])) { n = 0; continue; }   /* 구분선 → 번호 리셋 */
+      var m = lines[i].match(/^(\s*)(\d+)\.(.*)$/);                /* "12. 내용" 형태 */
+      if (m) { n++; lines[i] = m[1] + n + "." + m[3]; }
+    }
+    return lines;
+  }
+  function renumber(text) {
+    return renumberArr(text.split("\n")).join("\n");
+  }
+
+  /* 새로고침 전용 번호 정규화:
+     - 하단 구획(첫 구분선 아래)에서 번호 없는 내용 줄 -> 번호 부여
+     - 번호만 있고 내용 없는 줄 -> 제거
+     - 빈 줄(간격)·상단 일정은 그대로 */
+  function normalizeNumbering(text){
+    var lines = text.split("\n");
+    var firstSep = -1;
+    for (var i = 0; i < lines.length; i++){ if (isSep(lines[i])){ firstSep = i; break; } }
+    if (firstSep < 0) return text;
+    var out = [];
+    var n = 0;
+    for (var j = 0; j < lines.length; j++){
+      if (j < firstSep){ out.push(lines[j]); continue; }      /* 상단 그대로 */
+      var line = lines[j];
+      if (isSep(line)){ n = 0; out.push(line); continue; }     /* 구분선 = 리셋 */
+      var m = line.match(/^(\s*)(\d+)\.(.*)$/);
+      if (m){
+        if (/^\s*$/.test(m[3])){ continue; }                   /* 번호만 있고 내용 없음 -> 제거 */
+        n++; out.push(n + '.' + m[3]);
+      } else {
+        if (/^\s*$/.test(line)){ out.push(line); continue; }   /* 빈 줄 유지 */
+        n++; out.push(n + '.' + line.replace(/^\s+/, ''));     /* 번호 없는 내용 -> 번호 부여 */
+      }
+    }
+    return out.join("\n");
+  }
+
+  var view = document.getElementById('view');
+  var edit = document.getElementById('edit');
+  var topbar = document.getElementById('topbar');
+
+  function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function isSep(line){ return /^[\s=\-_]{4,}$/.test(line); }
+
+  /* URL을 클릭 가능한 링크로 변환 (기본 브라우저로 열림) */
+  function openUrl(u){
+    try { new ActiveXObject("WScript.Shell").Run(u.replace(/&amp;/g, '&')); } catch(e){}
+  }
+  function linkify(s){
+    return s.replace(/(https?:\/\/[^\s"'<>]+)/g, function(u){
+      return '<span class="lnk" onclick="openUrl(\'' + u + '\');event.cancelBubble=true;return false;">' + u + '</span>';
+    });
+  }
+
+  /* 상단 체크리스트 마커 (소스에 이모지 직접 입력 대신 코드포인트로 구성) */
+  var MK_DONE = String.fromCharCode(0x2705);          /* 완료 이모지 */
+  var MK_TODO = String.fromCharCode(0xD83D, 0xDD32);  /* 미완료 이모지 */
+  var MK_NOTE = String.fromCharCode(0x2192);          /* 화살표(세부 메모) */
+
+  /* 상단 구획에서 시간(HH:MM)으로 시작하는 줄에 자동으로 미완료 체크박스 부여 */
+  function autoFormatTop(text){
+    var lines = text.split("\n");
+    for (var i = 0; i < lines.length; i++){
+      if (isSep(lines[i])) break;                       /* 첫 구분선 = 상단 끝 */
+      var line = lines[i];
+      if (line.substr(0, 1) === MK_DONE) continue;      /* 이미 완료 */
+      if (line.substr(0, 2) === MK_TODO) continue;      /* 이미 미완료 */
+      if (line.substr(0, 1) === MK_NOTE) continue;      /* 세부 메모 */
+      if (/^\s*\d{1,2}:\d{2}/.test(line)){              /* 09:30 처럼 시간으로 시작 */
+        lines[i] = MK_TODO + ' ' + line.replace(/^\s+/, '');
+      }
+    }
+    return lines.join("\n");
+  }
+
+  /* 보기 모드 렌더링: 상단 체크리스트(첫 구분선 위)는 체크박스로 표시 */
+  function renderView(){
+    var lines = content.split("\n");
+    var firstSep = lines.length;
+    for (var s = 0; s < lines.length; s++){ if (isSep(lines[s])){ firstSep = s; break; } }
+    var html = '';
+    for (var i = 0; i < lines.length; i++){
+      var line = lines[i];
+      var top = (i < firstSep);
+      var isDone = (line.substr(0, 1) === MK_DONE);
+      var isTodo = (line.substr(0, 2) === MK_TODO);
+      if (top && (isDone || isTodo)){
+        var shown = line.substr(isDone ? 1 : 2).replace(/^\s+/, '');
+        html += '<div class="ln item' + (isDone ? ' done' : '') + '">'
+              + '<span class="cb' + (isDone ? ' on' : '') + '" onclick="toggleDone(' + i + ');event.cancelBubble=true;return false;"></span>'
+              + '<span class="tx">' + linkify(escapeHtml(shown)) + '</span></div>';
+      } else if (top && line.substr(0, 1) === MK_NOTE){
+        html += '<div class="ln note">' + linkify(escapeHtml(line)) + '</div>';
+      } else if (line === ''){
+        html += '<div class="ln">&nbsp;</div>';
+      } else {
+        html += '<div class="ln">' + linkify(escapeHtml(line)) + '</div>';
+      }
+    }
+    view.innerHTML = html;
+  }
+
+  /* 체크박스 토글: ✔ 마커를 내용 앞에 넣었다 뺐다 */
+  function toggleDone(idx){
+    var lines = content.split("\n");
+    if (idx < 0 || idx >= lines.length) return;
+    var line = lines[idx];
+    if (line.substr(0, 1) !== MK_DONE && line.substr(0, 2) !== MK_TODO) return;
+    pushUndo(content);
+    if (line.substr(0, 1) === MK_DONE){
+      lines[idx] = MK_TODO + line.substr(1);
+    } else if (line.substr(0, 2) === MK_TODO){
+      lines[idx] = MK_DONE + line.substr(2);
+    } else {
+      return;
+    }
+    content = lines.join("\n");
+    saveMemo(content);
+    edit.value = content;
+    renderView();
+  }
+
+  var content = renumber(autoFormatTop(loadMemo()));
+  edit.value = content;
+  saveMemo(content);
+  renderView();
+
+  /* 편집 모드 진입 (편집 버튼 & 더블클릭 공용) */
+  function startEdit(){
+    if (edit.style.display === 'block') { edit.focus(); return; }
+    pushUndo(content);
+    edit.value = content;
+    view.style.display = 'none';
+    edit.style.display = 'block';
+    edit.focus();
+  }
+
+  view.ondblclick = function () { startEdit(); };
+  edit.oninput = function () {
+    content = edit.value;
+    saveMemo(content);
+  };
+
+  /* ===== Alt+↑ / Alt+↓ : 현재 줄(또는 선택 줄들) 위아래 이동 ===== */
+  function moveLines(dir) {
+    var val = edit.value;
+    var s = edit.selectionStart, en = edit.selectionEnd;
+    var lines = val.split("\n");
+    var startLine = val.substring(0, s).split("\n").length - 1;
+    var endLine = val.substring(0, en).split("\n").length - 1;
+
+    if (dir < 0 && startLine === 0) return;
+    if (dir > 0 && endLine === lines.length - 1) return;
+
+    var block = lines.slice(startLine, endLine + 1);
+    lines.splice(startLine, block.length);
+    var insertAt = startLine + dir;
+    for (var i = 0; i < block.length; i++) {
+      lines.splice(insertAt + i, 0, block[i]);
+    }
+    renumberArr(lines);
+    edit.value = lines.join("\n");
+
+    var newStart = 0;
+    for (var j = 0; j < insertAt; j++) newStart += lines[j].length + 1;
+    var newEnd = newStart;
+    for (var k = 0; k < block.length; k++) newEnd += lines[insertAt + k].length + 1;
+    if (newEnd > newStart) newEnd -= 1;
+
+    edit.setSelectionRange(newStart, newEnd);
+    content = edit.value;
+    saveMemo(content);
+  }
+
+  edit.onkeydown = function () {
+    var e = window.event;
+    if (e.altKey && (e.keyCode === 38 || e.keyCode === 40)) {
+      moveLines(e.keyCode === 38 ? -1 : 1);
+      e.returnValue = false;
+      return false;
+    }
+  };
+
+  edit.onblur = function () {
+    content = renumber(autoFormatTop(edit.value));
+    edit.value = content;
+    saveMemo(content);
+    renderView();
+    edit.style.display = 'none';
+    view.style.display = 'block';
+  };
+
+  var dragging = false, offX = 0, offY = 0;
+  topbar.onmousedown = function () {
+    var e = window.event;
+    var st = e.srcElement;
+    if (st && (st.id === 'close' || (st.className && ('' + st.className).indexOf('tb-btn') >= 0))) return;
+    dragging = true;
+    offX = e.screenX - window.screenLeft;
+    offY = e.screenY - window.screenTop;
+  };
+  document.onmousemove = function () {
+    if (!dragging) return;
+    var e = window.event;
+    window.moveTo(e.screenX - offX, e.screenY - offY);
+  };
+  document.onmouseup = function () { dragging = false; };
+  document.getElementById('close').onclick = function () { window.close(); };
+
+  window.onload = function () {
+    window.resizeTo(340, screen.availHeight);
+    window.moveTo(0, 0);
+  };
+</script>
+</body>
+</html>
