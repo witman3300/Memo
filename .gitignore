@@ -12,6 +12,9 @@ _*
 desktop_memo_content.txt
 content.txt
 
+# 개인 업무 루틴이 들어있는 HTA (배포판 memo_widget_SJBC.hta만 저장소에 둔다)
+memo_widget.hta
+
 # 아이콘 미리보기 (생성 부산물, icon.ico만 관리)
 icon_preview.png
 
