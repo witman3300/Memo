@@ -115,6 +115,14 @@
   ::-webkit-scrollbar-thumb { background: rgba(120,90,10,0.25); border-radius: 6px; }
 
   #kakaoBtn { font-size: 14px; }
+
+  /* 동기화 버튼 상태 색 */
+  #syncBtn { font-size: 14px; transition: color 0.2s, opacity 0.2s; }
+  #syncBtn.off      { color: rgba(120, 90, 10, 0.35); }
+  #syncBtn.ok       { color: #2a8a3e; }
+  #syncBtn.busy     { color: #c78a00; opacity: 0.55; }
+  #syncBtn.err      { color: #b00; }
+  #syncBtn.busy:hover, #syncBtn.ok:hover, #syncBtn.err:hover, #syncBtn.off:hover { color: #2a8a3e; }
   #toast {
     position: fixed;
     bottom: 12px; left: 50%;
@@ -139,12 +147,14 @@
       <span class="tb-btn" id="undoBtn" title="되돌리기">&#8630;</span>
       <span class="tb-btn" id="refreshBtn" title="새로고침">&#8635;</span>
       <span class="tb-btn" id="kakaoBtn" title="메모 복사 후 카카오톡 열기">💬</span>
+      <span class="tb-btn off" id="syncBtn" title="구글 드라이브 동기화">☁</span>
       <span id="close" title="닫기">&#215;</span>
     </div>
     <div id="view"></div>
     <textarea id="edit" spellcheck="false"></textarea>
     <div id="toast"></div>
   </div>
+  <script src="memo-core.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

@@ -13,7 +13,11 @@
     "directories": { "output": "dist" },
     "win": { "target": "portable", "icon": "icon.ico" },
     "portable": { "artifactName": "MemoWidget.exe" },
-    "files": ["main.js", "preload.js", "index.html", "renderer.js", "icon.ico"]
+    "files": [
+      "main.js", "preload.js", "index.html", "renderer.js",
+      "memo-core.js", "drive-api.js", "gauth.js", "store.js",
+      "setup.html", "setup.js", "icon.ico"
+    ]
   },
   "devDependencies": {
     "electron": "latest",

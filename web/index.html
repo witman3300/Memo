@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#f6f0d2">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="메모">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<title>메모</title>
+<style>
+  :root {
+    --paper: #faf6e2;
+    --paper-edit: #fffdf0;
+    --line: rgba(200, 180, 80, 0.5);
+    --ink: #32230a;
+    --ink-dim: rgba(50, 35, 5, 0.62);
+    --green: #2a8a3e;
+    --bar: #f6f0d2;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Malgun Gothic', -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    overscroll-behavior: none;
+  }
+
+  /* ---------- 상단 바 ---------- */
+  #topbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: max(env(safe-area-inset-top), 6px) 6px 6px;
+    background: var(--bar);
+    border-bottom: 1px solid var(--line);
+  }
+  #title { font-size: 15px; font-weight: 700; padding: 0 6px; flex: 1 1 auto; }
+  .btn {
+    flex: 0 0 auto;
+    min-width: 42px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px;
+    border: none; background: none; color: rgba(120, 90, 10, 0.8);
+    border-radius: 9px; cursor: pointer; font-family: inherit;
+  }
+  .btn:active { background: rgba(120, 90, 10, 0.12); }
+  #doneBtn { font-size: 15px; font-weight: 700; color: var(--green); min-width: 54px; display: none; }
+  #syncBtn.off { color: rgba(120, 90, 10, 0.3); }
+  #syncBtn.ok { color: var(--green); }
+  #syncBtn.busy { color: #c78a00; opacity: 0.5; }
+  #syncBtn.err { color: #b00; }
+
+  /* ---------- 본문 ---------- */
+  #view, #edit {
+    flex: 1 1 auto;
+    padding: 12px 14px calc(24px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 15px;
+    line-height: 1.85;
+    color: var(--ink);
+  }
+  #edit {
+    display: none;
+    width: 100%;
+    border: none; outline: none; resize: none;
+    background: var(--paper-edit);
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.85;
+  }
+  #view .ln { white-space: pre-wrap; word-break: break-word; }
+  #view .item { display: flex; align-items: flex-start; }
+  #view .cb {
+    display: inline-block;
+    width: 20px; height: 20px;
+    margin: 4px 10px 0 0;
+    border: 2px solid rgba(120, 90, 10, 0.8);
+    border-radius: 4px;
+    position: relative;
+    flex: 0 0 auto;
+  }
+  #view .cb.on { background: var(--green); border-color: var(--green); }
+  #view .cb.on:after {
+    content: '';
+    position: absolute;
+    left: 5px; top: 1px;
+    width: 5px; height: 10px;
+    border: solid #fff; border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+  }
+  #view .tx { flex: 1 1 auto; }
+  #view .item.done .tx { text-decoration: line-through; opacity: 0.45; }
+  #view .note { padding-left: 30px; opacity: 0.72; }
+  #view .item { padding: 3px 0; }
+
+  /* ---------- 첫 실행 안내 ---------- */
+  #gate {
+    position: fixed; inset: 0;
+    background: var(--paper);
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 28px; text-align: center; gap: 14px; z-index: 20;
+  }
+  #gate.show { display: flex; }
+  #gate h2 { margin: 0; font-size: 19px; }
+  #gate p { margin: 0; font-size: 14px; color: var(--ink-dim); line-height: 1.7; max-width: 340px; }
+  #gate button {
+    margin-top: 8px;
+    padding: 13px 26px; font-size: 15px; font-weight: 700; font-family: inherit;
+    border: none; border-radius: 10px; background: var(--green); color: #fff;
+  }
+  #gate .skip { background: none; color: var(--ink-dim); font-weight: 400; font-size: 13px; padding: 6px; }
+
+  /* ---------- 토스트 ---------- */
+  #toast {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 50%; transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.82); color: #fff;
+    padding: 10px 16px; border-radius: 10px;
+    font-size: 13px; max-width: 88vw; text-align: center;
+    opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 30;
+  }
+  #toast.show { opacity: 1; }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: rgba(120, 90, 10, 0.25); border-radius: 5px; }
+</style>
+</head>
+<body>
+  <div id="topbar">
+    <span id="title">📌 메모</span>
+    <button class="btn" id="undoBtn" title="되돌리기">&#8630;</button>
+    <button class="btn" id="refreshBtn" title="번호 정리">&#8635;</button>
+    <button class="btn off" id="syncBtn" title="동기화">&#9729;</button>
+    <button class="btn" id="editBtn" title="편집">&#9998;</button>
+    <button class="btn" id="doneBtn" title="완료">완료</button>
+  </div>
+
+  <div id="view"></div>
+  <textarea id="edit" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+
+  <div id="gate">
+    <div style="font-size:44px">📌</div>
+    <h2>메모위젯</h2>
+    <p>구글 드라이브의 <b>MemoWidget/content.txt</b> 에 연결하면
+       PC 위젯과 같은 메모를 폰에서 바로 보고 고칠 수 있습니다.</p>
+    <button id="gateLogin">구글 계정으로 연결</button>
+    <button class="skip" id="gateSkip">나중에 — 이 기기에만 저장</button>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="../memo-core.js"></script>
+  <script src="../drive-api.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -2,6 +2,14 @@
 
 바탕화면 왼쪽에 고정되는 **반투명 메모 위젯**입니다. 메모·할 일 체크리스트·시간대별 일정을 한 곳에서 관리하고, 카카오톡으로 바로 보낼 수 있습니다. Electron 기반으로 단일 `.exe`(portable)로 빌드됩니다.
 
+**구글 드라이브로 휴대폰과 동기화**됩니다 — PC 위젯과 모바일 웹앱(PWA)이 내 드라이브의 `MemoWidget/content.txt` 한 파일을 같이 씁니다. 설정 방법은 **[SETUP-GOOGLE.md](SETUP-GOOGLE.md)** 참고.
+
+```
+[PC 위젯]  ──┐
+             ├──→  내 구글 드라이브 : MemoWidget/content.txt
+[폰 웹앱]  ──┘        (양방향 자동 동기화)
+```
+
 ## ✨ 기능
 
 - **반투명 프레임리스 위젯** — 화면 왼쪽 끝에 고정, 바탕화면이 비치는 유리 느낌
@@ -14,6 +22,8 @@
 - **되돌리기 / 새로고침** — 상단 바 버튼 (↶ 되돌리기 · ↻ 새로고침)
   - 새로고침: 번호 없는 줄에 번호 부여, 내용 없는 번호 줄 제거
 - **카카오톡 전송 (💬)** — 메모를 클립보드에 복사하고 카카오톡을 열어 '나와의 채팅'에 붙여넣기
+- **구글 드라이브 동기화 (☁)** — 1분마다 자동 양방향 동기화, 충돌 시 상대편 사본을 시각이 붙은 파일로 백업
+- **모바일 웹앱 (PWA)** — 홈화면에 설치해 앱처럼 사용, 오프라인 편집 후 자동 재동기화
 
 ## 🖱️ 사용법
 
@@ -27,6 +37,8 @@
 | 되돌리기 | 상단 **↶** |
 | 새로고침(번호 정리) | 상단 **↻** |
 | 카톡으로 보내기 | 상단 **💬** → 카톡에서 `Ctrl + V` |
+| 지금 동기화 | 상단 **☁** 클릭 |
+| 드라이브 연결 설정 | 상단 **☁** **우클릭** |
 | 닫기 | 상단 **×** |
 
 ## 🚀 실행 (배포본)
@@ -49,19 +61,27 @@ npm run dist       # portable .exe 빌드 → dist/MemoWidget.exe
 ## 💾 데이터 저장 위치
 
 ```
-%APPDATA%\desktop-memo\content.txt
+%APPDATA%\desktop-memo\content.txt        메모 본문 (로컬)
+%APPDATA%\desktop-memo\google.json        구글 OAuth 자격증명 · 토큰
+%APPDATA%\desktop-memo\sync-state.json    동기화 상태 (드라이브 파일 ID 등)
 ```
 
-메모 본문은 위 파일에 저장되며, 저장소(git)에는 포함되지 않습니다.
+메모 본문은 위 파일과 **내 구글 드라이브의 `MemoWidget/content.txt`** 에 저장되며, 저장소(git)에는 포함되지 않습니다. 자격증명도 저장소에 들어가지 않습니다.
 
 ## 📁 구성
 
 | 파일 | 역할 |
 |---|---|
-| `main.js` | Electron 메인 프로세스 (창 생성, 파일 입출력, 카톡 실행) |
+| `main.js` | Electron 메인 프로세스 (창 생성, 파일 입출력, 카톡 실행, 동기화 루프) |
 | `preload.js` | 렌더러에 안전한 API 노출 (contextBridge) |
 | `index.html` | 위젯 UI / 스타일 |
-| `renderer.js` | 메모 로직 (렌더링, 체크박스, 번호, 줄이동, 되돌리기 등) |
+| `renderer.js` | 위젯 화면 로직 (렌더링, 체크박스, 줄이동, 동기화 버튼) |
+| `memo-core.js` | **메모 공통 로직** — 번호 매기기·체크박스·렌더링 (PC/모바일 공용) |
+| `drive-api.js` | **드라이브 공통 로직** — 파일 확보·업로드·다운로드·충돌 처리 (PC/모바일 공용) |
+| `gauth.js` | 데스크톱 OAuth (PKCE + 루프백 리디렉션) |
+| `store.js` | 동기화 상태 JSON 저장소 |
+| `setup.html` · `setup.js` | 구글 드라이브 연결 설정 창 |
+| `web/` | **모바일 웹앱 (PWA)** — `index.html` · `app.js` · `config.js` · `sw.js` · `manifest.webmanifest` |
 | `icon.ico` | 앱 아이콘 |
 | `package.json` | electron-builder 빌드 설정 |
 
@@ -69,3 +89,6 @@ npm run dist       # portable .exe 빌드 → dist/MemoWidget.exe
 
 - [Electron](https://www.electronjs.org/)
 - [electron-builder](https://www.electron.build/) (portable target)
+- Google Drive API v3 (`drive.file` 범위 — 이 앱이 만든 파일만 접근)
+- Google Identity Services (웹) / OAuth PKCE 루프백 (데스크톱)
+- PWA (service worker + manifest, 오프라인 지원)

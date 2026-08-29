@@ -20,3 +20,10 @@ Thumbs.db
 desktop.ini
 .DS_Store
 .vscode/
+
+# 브라우저 자동화 산출물
+.playwright-mcp/
+
+# 구글 OAuth 자격증명 (혹시라도 폴더에 들어올 경우 대비 — 실제 위치는 %APPDATA%\desktop-memo)
+google.json
+sync-state.json

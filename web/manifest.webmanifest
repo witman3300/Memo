@@ -1,0 +1,17 @@
+{
+  "name": "메모위젯",
+  "short_name": "메모",
+  "description": "구글 드라이브로 PC 위젯과 동기화되는 메모",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#faf6e2",
+  "theme_color": "#f6f0d2",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

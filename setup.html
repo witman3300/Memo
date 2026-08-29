@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>구글 드라이브 연결</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px 22px;
+    font-family: 'Malgun Gothic', 'Segoe UI', sans-serif;
+    font-size: 13px; color: #2f2405; background: #fbf8ea;
+  }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  .sub { color: #7a6a3a; margin: 0 0 16px; font-size: 12px; line-height: 1.6; }
+  ol { margin: 0 0 16px; padding-left: 18px; color: #5c4d22; line-height: 1.85; font-size: 12px; }
+  ol code { background: #f0ead0; padding: 1px 5px; border-radius: 3px; font-size: 11.5px; }
+  a { color: #2a6ea8; cursor: pointer; }
+  label { display: block; font-weight: 600; margin: 10px 0 4px; font-size: 12px; }
+  input {
+    width: 100%; padding: 8px 9px; font-size: 12px;
+    border: 1px solid #d8cea2; border-radius: 5px; background: #fff; font-family: inherit;
+  }
+  input:focus { outline: none; border-color: #2a8a3e; }
+  .row { display: flex; gap: 8px; margin-top: 18px; }
+  button {
+    padding: 9px 14px; font-size: 12.5px; font-family: inherit;
+    border: 1px solid #c9bd8b; border-radius: 6px; background: #fff; cursor: pointer;
+  }
+  button:hover { border-color: #2a8a3e; color: #2a8a3e; }
+  button.primary { background: #2a8a3e; border-color: #2a8a3e; color: #fff; font-weight: 600; }
+  button.primary:hover { background: #237533; color: #fff; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #msg { margin-top: 14px; font-size: 12px; min-height: 18px; line-height: 1.6; }
+  #msg.ok { color: #2a8a3e; }
+  #msg.err { color: #b00; }
+  .state { margin-top: 4px; padding: 9px 11px; border-radius: 6px; background: #f2ecd4; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>📌 구글 드라이브 연결</h1>
+  <p class="sub">메모를 내 구글 드라이브의 <b>MemoWidget/content.txt</b> 에 저장해,
+     PC 위젯과 휴대폰 웹앱이 같은 메모를 함께 씁니다.</p>
+
+  <div class="state" id="state">상태 확인 중…</div>
+
+  <ol>
+    <li><a id="lnkConsole">Google Cloud Console</a> 에서 프로젝트를 하나 만듭니다.</li>
+    <li>API 및 서비스 → 라이브러리 → <code>Google Drive API</code> 사용 설정</li>
+    <li>OAuth 동의 화면 → 외부 → 테스트 사용자에 <b>본인 구글 계정</b> 추가</li>
+    <li>사용자 인증 정보 → 클라이언트 ID 만들기 → 유형 <b>데스크톱 앱</b></li>
+    <li>발급된 <b>클라이언트 ID / 시크릿</b>을 아래에 붙여넣고 [연결하기]</li>
+  </ol>
+
+  <label for="cid">클라이언트 ID</label>
+  <input id="cid" placeholder="123456789-xxxxxxxx.apps.googleusercontent.com" spellcheck="false">
+
+  <label for="csec">클라이언트 시크릿</label>
+  <input id="csec" placeholder="GOCSPX-..." spellcheck="false">
+
+  <div class="row">
+    <button class="primary" id="btnLogin">연결하기</button>
+    <button id="btnOpen">드라이브에서 열기</button>
+    <button id="btnLogout">연결 해제</button>
+  </div>
+
+  <div id="msg"></div>
+
+  <script src="setup.js"></script>
+</body>
+</html>
